@@ -1,0 +1,5 @@
+$ terraform init -backend=false && terraform validate   # remediate/terraform/
+Success! The configuration is valid.
+
+$ gitleaks (v8.21.2, full scan with waiver-generated .gitleaksignore)
+no leaks found — 1 real false positive waived by fingerprint (SEC-151)

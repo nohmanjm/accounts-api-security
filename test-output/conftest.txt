@@ -1,0 +1,20 @@
+$ conftest verify --policy policy/rego
+
+19 tests, 19 passed, 0 warnings, 0 failures, 0 exceptions, 0 skipped
+
+$ conftest test --parser hcl2 --policy policy/rego policy/terraform-fixtures/bad.tf   # artifact (b): MUST FAIL
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_db_instance.accounts: publicly_accessible must be a literal false — customer PII one password from the internet (T4)
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_db_instance.accounts: password in config lands in state and plan output — use manage_master_user_password (T3)
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_db_instance.accounts: storage_encrypted must be true with a CMK (regulatory + snapshot exfil)
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_db_instance.accounts: backup_retention_period must be a literal >= 7 — any incident becomes permanent data loss
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_db_instance.accounts: skip_final_snapshot must be a literal false — deletion leaves no recovery point
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_security_group_rule.db_ingress: ingress open to 0.0.0.0/0 — use source_security_group_id (T4)
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_cloudtrail.org: global service (IAM/STS) events excluded — identity attacks leave no record
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_cloudtrail.org: log file validation off — trail is tamperable, hence deniable
+FAIL - policy/terraform-fixtures/bad.tf - main - aws_cloudtrail.org: must be multi-region — single-region trails blind us to activity elsewhere
+
+13 tests, 4 passed, 0 warnings, 9 failures, 0 exceptions
+
+$ conftest test --parser hcl2 --policy policy/rego remediate/terraform/ terraform/   # fixed: MUST PASS
+
+39 tests, 39 passed, 0 warnings, 0 failures, 0 exceptions
