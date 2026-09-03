@@ -1,0 +1,51 @@
+$ kyverno test policy/kyverno/tests/
+Loading test  ( policy/kyverno/tests/kyverno-test.yaml ) ...
+  Loading values/variables ...
+  Loading policies ...
+  Loading resources ...
+  Loading exceptions ...
+  Applying 7 policies to 7 resources with 0 exceptions ...
+  Checking results ...
+
+│──────────│───────────────────────────│────────────────────────────────│──────────────────────────────────────────────────────────────────│────────│──────────│
+│ [40;32mID (34) [0m │ [40;32mPOLICY                   [0m │ [40;32mRULE                          [0m │ [40;32mRESOURCE                                                        [0m │ [40;32mRESULT[0m │ [40;32mREASON  [0m │
+│──────────│───────────────────────────│────────────────────────────────│──────────────────────────────────────────────────────────────────│────────│──────────│
+│ 1        │ disallow-hostpath         │ autogen-no-hostpath-volumes    │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 2        │ disallow-hostpath         │ autogen-no-hostpath-volumes    │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 3        │ disallow-host-namespaces  │ autogen-no-host-namespaces     │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 4        │ disallow-host-namespaces  │ autogen-no-host-namespaces     │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 5        │ require-run-as-nonroot    │ autogen-run-as-non-root        │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 6        │ require-run-as-nonroot    │ autogen-run-as-non-root        │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 7        │ require-image-digest      │ autogen-no-latest-tag          │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 8        │ require-image-digest      │ autogen-no-latest-tag          │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 9        │ require-image-digest      │ autogen-require-digest         │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 10       │ require-image-digest      │ autogen-require-digest         │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 11       │ disallow-secrets-from-env │ autogen-no-secrets-in-env      │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 12       │ disallow-secrets-from-env │ autogen-no-secrets-in-env      │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 13       │ restrict-registries       │ autogen-accounts-ecr-only      │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Ok       │
+│ 14       │ restrict-registries       │ autogen-accounts-ecr-only      │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Excluded │
+│ 15       │ restrict-rbac-wildcards   │ no-wildcard-verbs-or-resources │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Excluded │
+│ 16       │ restrict-rbac-wildcards   │ no-wildcard-verbs-or-resources │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Ok       │
+│ 17       │ restrict-rbac-wildcards   │ no-broad-secrets-access        │ apps/v1/Deployment/accounts/accounts-api-original                │ Pass   │ Excluded │
+│ 18       │ restrict-rbac-wildcards   │ no-broad-secrets-access        │ rbac.authorization.k8s.io/v1/Role/accounts/accounts-api-original │ Pass   │ Ok       │
+│ 19       │ require-run-as-nonroot    │ autogen-run-as-non-root        │ apps/v1/Deployment/accounts/accounts-api-bypass                  │ Pass   │ Ok       │
+│ 20       │ require-image-digest      │ autogen-no-latest-tag          │ apps/v1/Deployment/accounts/accounts-api-bypass                  │ Pass   │ Ok       │
+│ 21       │ require-image-digest      │ autogen-require-digest         │ apps/v1/Deployment/accounts/accounts-api-bypass                  │ Pass   │ Ok       │
+│ 22       │ disallow-secrets-from-env │ autogen-no-secrets-in-env      │ apps/v1/Deployment/accounts/accounts-api-bypass                  │ Pass   │ Ok       │
+│ 23       │ restrict-registries       │ autogen-accounts-ecr-only      │ apps/v1/Deployment/accounts/accounts-api-bypass                  │ Pass   │ Ok       │
+│ 24       │ restrict-rbac-wildcards   │ no-privileged-role-bindings    │ rbac.authorization.k8s.io/v1/RoleBinding/accounts/bypass-binding │ Pass   │ Ok       │
+│ 25       │ restrict-rbac-wildcards   │ no-wildcard-verbs-or-resources │ rbac.authorization.k8s.io/v1/Role/accounts/apigroups-wildcard    │ Pass   │ Ok       │
+│ 26       │ disallow-hostpath         │ autogen-no-hostpath-volumes    │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 27       │ disallow-host-namespaces  │ autogen-no-host-namespaces     │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 28       │ require-run-as-nonroot    │ autogen-run-as-non-root        │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 29       │ require-image-digest      │ autogen-no-latest-tag          │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 30       │ require-image-digest      │ autogen-require-digest         │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 31       │ disallow-secrets-from-env │ autogen-no-secrets-in-env      │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 32       │ restrict-registries       │ autogen-accounts-ecr-only      │ apps/v1/Deployment/accounts/accounts-api-fixed                   │ Pass   │ Ok       │
+│ 33       │ restrict-rbac-wildcards   │ no-wildcard-verbs-or-resources │ rbac.authorization.k8s.io/v1/Role/accounts/eso-reader-fixed      │ Pass   │ Ok       │
+│ 34       │ restrict-rbac-wildcards   │ no-broad-secrets-access        │ rbac.authorization.k8s.io/v1/Role/accounts/eso-reader-fixed      │ Pass   │ Ok       │
+│──────────│───────────────────────────│────────────────────────────────│──────────────────────────────────────────────────────────────────│────────│──────────│
+
+
+Test Summary: 34 tests passed and 0 tests failed
+
