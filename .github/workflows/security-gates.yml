@@ -21,7 +21,7 @@ jobs:
   waivers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate waivers (build fails on expiry)
         run: |
           python3 -m pip install --quiet pyyaml
@@ -41,7 +41,7 @@ jobs:
     if: ${{ github.event.inputs.break_glass != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history, not the diff
       - uses: actions/download-artifact@v4
@@ -56,7 +56,7 @@ jobs:
     if: ${{ github.event.inputs.break_glass != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with: { name: waiver-ignores }
       - name: Trivy dependency scan
@@ -75,7 +75,7 @@ jobs:
     if: ${{ github.event.inputs.break_glass != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with: { name: waiver-ignores }
       - name: Semgrep (ERROR severity blocks)
@@ -93,7 +93,7 @@ jobs:
     if: ${{ github.event.inputs.break_glass != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with: { name: waiver-ignores }
       - name: Trivy IaC misconfig scan
@@ -120,7 +120,7 @@ jobs:
     if: ${{ github.event.inputs.break_glass != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Kyverno policy tests
         run: |
           curl -sSfL https://github.com/kyverno/kyverno/releases/download/v1.13.2/kyverno-cli_v1.13.2_linux_x86_64.tar.gz | tar -xz kyverno
