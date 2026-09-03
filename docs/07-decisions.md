@@ -41,6 +41,16 @@ the target threshold, waiver-to-fix ratio < 1 for the month, and zero break-glas
 invocations attributable to that gate. A gate promoted without that evidence is
 promoted on hope.
 
+**Branch protection is enabled on this repository, not merely described:** `main`
+requires all six `security-gates` checks to pass, requires a pull request before
+merging, blocks force-pushes and deletions, and is enforced on admins. A demonstration
+PR that reintroduces the T4 public-database defect is left open as evidence — its `iac`
+check fails and the merge is refused by policy. One honest accommodation for a
+single-maintainer repo: required approvals are set to 0 and code-owner review is off,
+because a lone author cannot approve their own PR and the `CODEOWNERS` team is
+illustrative. In a real org both flip on with the actual two-person platform team; the
+`CODEOWNERS` file and the waiver-approval story already assume it.
+
 ## Blast radius
 
 **(a) accounts-api compromised via RCE.**
