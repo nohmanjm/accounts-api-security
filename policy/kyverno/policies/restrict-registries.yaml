@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-registries
+  annotations:
+    policies.mal.bank/threat: "T1"
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: accounts-ecr-only
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [accounts]
+      validate:
+        message: >-
+          Only images from the accounts ECR registry run in this namespace —
+          an image outside the verified prefix would skip signature
+          verification entirely.
+        pattern:
+          spec:
+            =(ephemeralContainers):
+              - image: "123456789012.dkr.ecr.ap-south-1.amazonaws.com/*"
+            =(initContainers):
+              - image: "123456789012.dkr.ecr.ap-south-1.amazonaws.com/*"
+            containers:
+              - image: "123456789012.dkr.ecr.ap-south-1.amazonaws.com/*"

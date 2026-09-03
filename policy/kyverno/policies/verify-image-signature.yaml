@@ -1,0 +1,30 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+  annotations:
+    policies.mal.bank/threat: "T1"
+spec:
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: require-signed-accounts-api
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [accounts]
+      verifyImages:
+        - imageReferences:
+            - "123456789012.dkr.ecr.ap-south-1.amazonaws.com/accounts-api*"
+          required: true
+          mutateDigest: true
+          verifyDigest: true
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/mal-bank/accounts-api/.github/workflows/build-release.yml@refs/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev

@@ -1,0 +1,72 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-rbac-wildcards
+  annotations:
+    policies.mal.bank/threat: "T2 T4"
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces: [accounts]
+  background: true
+  rules:
+    - name: no-wildcard-verbs-or-resources
+      match:
+        any:
+          - resources:
+              kinds: [Role, ClusterRole]
+      validate:
+        message: >-
+          Wildcard verbs, resources, or apiGroups in RBAC are forbidden —
+          enumerate exactly what the subject does.
+        deny:
+          conditions:
+            any:
+              - key: "{{ contains(request.object.rules[].verbs[] || `[]`, '*') }}"
+                operator: Equals
+                value: true
+              - key: "{{ contains(request.object.rules[].resources[] || `[]`, '*') }}"
+                operator: Equals
+                value: true
+              - key: "{{ contains(request.object.rules[].apiGroups[] || `[]`, '*') }}"
+                operator: Equals
+                value: true
+    - name: no-broad-secrets-access
+      match:
+        any:
+          - resources:
+              kinds: [Role, ClusterRole]
+      preconditions:
+        all:
+          - key: "{{ contains(request.object.rules[].resources[] || `[]`, 'secrets') }}"
+            operator: Equals
+            value: true
+      validate:
+        message: >-
+          A Role granting access to secrets must name the secrets
+          (resourceNames) — unscoped secrets access is namespace-wide
+          credential theft after any pod compromise.
+        foreach:
+          - list: "request.object.rules[?contains(resources || `[]`, 'secrets')]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ length(element.resourceNames || `[]`) }}"
+                    operator: Equals
+                    value: 0
+    - name: no-privileged-role-bindings
+      match:
+        any:
+          - resources:
+              kinds: [RoleBinding, ClusterRoleBinding]
+      validate:
+        message: >-
+          Binding to cluster-admin/admin/edit grants the wildcard and unscoped
+          secrets access this policy exists to forbid — bind purpose-built roles.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.roleRef.name }}"
+                operator: AnyIn
+                value: [cluster-admin, admin, edit]

@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOwnDbCredentialOnly",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:ap-south-1:123456789012:secret:prod/accounts-api/db-*"
+    },
+    {
+      "Sid": "DecryptOnlyViaSecretsManager",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "arn:aws:kms:ap-south-1:123456789012:key/11111111-2222-3333-4444-555555555555",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "secretsmanager.ap-south-1.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "ConsumeAccountEventStream",
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:GetRecords",
+        "kinesis:GetShardIterator",
+        "kinesis:DescribeStreamSummary",
+        "kinesis:ListShards"
+      ],
+      "Resource": "arn:aws:kinesis:ap-south-1:123456789012:stream/account-events"
+    },
+    {
+      "Sid": "AppendOnlyAuditRecords",
+      "Effect": "Allow",
+      "Action": "firehose:PutRecordBatch",
+      "Resource": "arn:aws:firehose:ap-south-1:123456789012:deliverystream/accounts-audit"
+    }
+  ]
+}
