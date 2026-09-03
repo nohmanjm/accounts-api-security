@@ -76,6 +76,7 @@ jobs:
   verify:
     needs: build-sign-attest
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # a stalled verification must fail the release, not hang
     permissions:
       packages: read
     steps:
@@ -86,15 +87,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Verify signature and SBOM attestation
+        env:
+          IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ needs.build-sign-attest.outputs.digest }}
+          IDENTITY: ^https://github.com/${{ github.repository }}/\.github/workflows/build-release\.yml@refs/(heads/main|tags/v.*)$
         run: |
-          cosign verify \
+          cosign verify --timeout 3m \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/\.github/workflows/build-release\.yml@refs/(heads/main|tags/v.*)$" \
-            "${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ needs.build-sign-attest.outputs.digest }}"
-          cosign verify-attestation --type spdxjson \
+            --certificate-identity-regexp "$IDENTITY" "$IMAGE_REF"
+          cosign verify-attestation --timeout 3m --type spdxjson \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/\.github/workflows/build-release\.yml@refs/(heads/main|tags/v.*)$" \
-            "${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ needs.build-sign-attest.outputs.digest }}"
+            --certificate-identity-regexp "$IDENTITY" "$IMAGE_REF"
 
   deploy:
     needs: [build-sign-attest, verify]
