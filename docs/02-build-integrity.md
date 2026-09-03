@@ -38,3 +38,27 @@ unaltered since. Does **not** prove: the code is safe, a human reviewed it, depe
 are clean, or the runner wasn't compromised. A maintainer-account takeover still produces
 a validly signed malicious image (worked in the decisions doc, blast radius b). Reviewers
 should read the signature as pipeline integrity, not code assurance.
+
+## Known limitation, recorded honestly: the verify job's live-Sigstore dependency
+
+The signing and attestation steps run green (`build-sign-attest`): the image is built,
+keyless-signed, and SBOM-attested, with the Rekor entry created. The separate `verify`
+job, however, performs **keyless verification against Sigstore's public-good
+infrastructure** (TUF trust-root fetch, Fulcio cert-chain check, Rekor inclusion-proof
+lookup) on every run. In this repo's CI that verification **stalled** — and cosign's own
+`--timeout` did not bound it, because the stall is in the TUF/network setup phase outside
+the operation timeout. I hardened the job to wrap each cosign call in an OS-level
+`timeout` with retries and a TUF pre-warm, so it now either completes, tolerates a
+transient stall, or **fails fast and blocks the release** rather than hanging. It may
+still go red when Sigstore's public endpoints are slow — that is an availability
+dependency, not a break in the signing chain.
+
+**What I'd do with more time (the bank-grade fix):** stop verifying against live public
+Sigstore in the release path. Sign with a **cosign bundle** so the Rekor inclusion proof
+and certificate travel *with* the artifact, then verify **offline** (`cosign verify
+--offline`) against a **pinned, mirrored trust root**. That removes the external
+dependency entirely, makes verification deterministic and fast, and is the posture a
+regulated bank should run anyway — a release gate must not depend on a third party's
+uptime. The same pinned-root verification is what `verify-image-signature.yaml` would use
+at admission. This is deferred, not designed away; it maps to **T1** exactly as the live
+verification does.

@@ -76,7 +76,7 @@ jobs:
   verify:
     needs: build-sign-attest
     runs-on: ubuntu-latest
-    timeout-minutes: 10 # a stalled verification must fail the release, not hang
+    timeout-minutes: 12 # backstop; the per-call OS timeout below is the real bound
     permissions:
       packages: read
     steps:
@@ -86,16 +86,30 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # cosign's own --timeout does not bound the TUF-root/network setup, so wrap each
+      # call in an OS-level hard timeout and retry — keyless verification depends on
+      # Sigstore's public infra (TUF, Fulcio, Rekor), which stalls transiently.
       - name: Verify signature and SBOM attestation
         env:
           IMAGE_REF: ${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ needs.build-sign-attest.outputs.digest }}
           IDENTITY: ^https://github.com/${{ github.repository }}/\.github/workflows/build-release\.yml@refs/(heads/main|tags/v.*)$
+          ISSUER: https://token.actions.githubusercontent.com
         run: |
-          cosign verify --timeout 3m \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          timeout -k 10 60 cosign initialize || echo "::warning::cosign initialize timed out; verify will refetch"
+          run_with_retry() {
+            label="$1"; shift
+            for attempt in 1 2 3; do
+              if timeout -k 10 120 "$@"; then return 0; fi
+              echo "::warning::${label} attempt ${attempt} timed out or failed; retrying"
+              sleep 15
+            done
+            echo "::error::${label} failed after 3 attempts — release blocked"; return 1
+          }
+          run_with_retry "cosign verify" cosign verify \
+            --certificate-oidc-issuer "$ISSUER" \
             --certificate-identity-regexp "$IDENTITY" "$IMAGE_REF"
-          cosign verify-attestation --timeout 3m --type spdxjson \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          run_with_retry "cosign verify-attestation" cosign verify-attestation --type spdxjson \
+            --certificate-oidc-issuer "$ISSUER" \
             --certificate-identity-regexp "$IDENTITY" "$IMAGE_REF"
 
   deploy:
