@@ -121,7 +121,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::123456789012:role/accounts-api-deploy
           aws-region: ap-south-1
