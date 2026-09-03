@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-run-as-nonroot
+  annotations:
+    policies.mal.bank/threat: "T2"
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces: [accounts]
+  background: true
+  rules:
+    - name: run-as-non-root
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          All containers (including init and ephemeral containers) must run as
+          non-root: runAsNonRoot must resolve true and runAsUser 0 is rejected
+          at every level.
+        anyPattern:
+          - spec:
+              securityContext:
+                runAsNonRoot: true
+                =(runAsUser): ">0"
+              =(ephemeralContainers):
+                - =(securityContext):
+                    =(runAsNonRoot): "true"
+                    =(runAsUser): ">0"
+              =(initContainers):
+                - =(securityContext):
+                    =(runAsNonRoot): "true"
+                    =(runAsUser): ">0"
+              containers:
+                - =(securityContext):
+                    =(runAsNonRoot): "true"
+                    =(runAsUser): ">0"
+          - spec:
+              =(ephemeralContainers):
+                - securityContext:
+                    runAsNonRoot: true
+                    =(runAsUser): ">0"
+              =(initContainers):
+                - securityContext:
+                    runAsNonRoot: true
+                    =(runAsUser): ">0"
+              containers:
+                - securityContext:
+                    runAsNonRoot: true
+                    =(runAsUser): ">0"

@@ -1,0 +1,142 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: accounts-api-baseline
+policies:
+  - ../policies/disallow-hostpath.yaml
+  - ../policies/disallow-host-namespaces.yaml
+  - ../policies/require-run-as-nonroot.yaml
+  - ../policies/require-image-digest.yaml
+  - ../policies/restrict-rbac-wildcards.yaml
+  - ../policies/disallow-secrets-from-env.yaml
+  - ../policies/restrict-registries.yaml
+resources:
+  - resources/bad-workload.yaml
+  - resources/good-workload.yaml
+  - resources/bypass-workload.yaml
+results:
+  - policy: disallow-hostpath
+    rule: autogen-no-hostpath-volumes
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: disallow-host-namespaces
+    rule: autogen-no-host-namespaces
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: require-run-as-nonroot
+    rule: autogen-run-as-non-root
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: require-image-digest
+    rule: autogen-no-latest-tag
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: require-image-digest
+    rule: autogen-require-digest
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: disallow-secrets-from-env
+    rule: autogen-no-secrets-in-env
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: restrict-registries
+    rule: autogen-accounts-ecr-only
+    kind: Deployment
+    resources: [accounts/accounts-api-original]
+    result: pass
+  - policy: restrict-rbac-wildcards
+    rule: no-wildcard-verbs-or-resources
+    kind: Role
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: restrict-rbac-wildcards
+    rule: no-broad-secrets-access
+    kind: Role
+    resources: [accounts/accounts-api-original]
+    result: fail
+  - policy: require-run-as-nonroot
+    rule: autogen-run-as-non-root
+    kind: Deployment
+    resources: [accounts/accounts-api-bypass]
+    result: fail
+  - policy: require-image-digest
+    rule: autogen-no-latest-tag
+    kind: Deployment
+    resources: [accounts/accounts-api-bypass]
+    result: fail
+  - policy: require-image-digest
+    rule: autogen-require-digest
+    kind: Deployment
+    resources: [accounts/accounts-api-bypass]
+    result: fail
+  - policy: disallow-secrets-from-env
+    rule: autogen-no-secrets-in-env
+    kind: Deployment
+    resources: [accounts/accounts-api-bypass]
+    result: fail
+  - policy: restrict-registries
+    rule: autogen-accounts-ecr-only
+    kind: Deployment
+    resources: [accounts/accounts-api-bypass]
+    result: fail
+  - policy: restrict-rbac-wildcards
+    rule: no-privileged-role-bindings
+    kind: RoleBinding
+    resources: [accounts/bypass-binding]
+    result: fail
+  - policy: restrict-rbac-wildcards
+    rule: no-wildcard-verbs-or-resources
+    kind: Role
+    resources: [accounts/apigroups-wildcard]
+    result: fail
+  - policy: disallow-hostpath
+    rule: autogen-no-hostpath-volumes
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: disallow-host-namespaces
+    rule: autogen-no-host-namespaces
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: require-run-as-nonroot
+    rule: autogen-run-as-non-root
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: require-image-digest
+    rule: autogen-no-latest-tag
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: require-image-digest
+    rule: autogen-require-digest
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: disallow-secrets-from-env
+    rule: autogen-no-secrets-in-env
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: restrict-registries
+    rule: autogen-accounts-ecr-only
+    kind: Deployment
+    resources: [accounts/accounts-api-fixed]
+    result: pass
+  - policy: restrict-rbac-wildcards
+    rule: no-wildcard-verbs-or-resources
+    kind: Role
+    resources: [accounts/eso-reader-fixed]
+    result: pass
+  - policy: restrict-rbac-wildcards
+    rule: no-broad-secrets-access
+    kind: Role
+    resources: [accounts/eso-reader-fixed]
+    result: pass

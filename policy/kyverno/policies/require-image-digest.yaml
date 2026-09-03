@@ -1,0 +1,45 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-image-digest
+  annotations:
+    policies.mal.bank/threat: "T1"
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces: [accounts]
+  background: true
+  rules:
+    - name: no-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: ":latest is mutable — whoever pushes the tag owns the next restart."
+        pattern:
+          spec:
+            =(ephemeralContainers):
+              - image: "!*:latest"
+            =(initContainers):
+              - image: "!*:latest"
+            containers:
+              - image: "!*:latest"
+    - name: require-digest
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          Every image (init and ephemeral containers included) must be pinned by
+          a valid sha256 digest emitted by the signed build.
+        foreach:
+          - list: "[request.object.spec.containers || `[]`, request.object.spec.initContainers || `[]`, request.object.spec.ephemeralContainers || `[]`][]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ regex_match('.*@sha256:[a-f0-9]{64}$', element.image) }}"
+                    operator: Equals
+                    value: false

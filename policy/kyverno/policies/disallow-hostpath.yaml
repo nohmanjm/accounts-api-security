@@ -1,0 +1,26 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-hostpath
+  annotations:
+    policies.mal.bank/threat: "T2"
+spec:
+  validationFailureAction: Audit
+  validationFailureActionOverrides:
+    - action: Enforce
+      namespaces: [accounts]
+  background: true
+  rules:
+    - name: no-hostpath-volumes
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      validate:
+        message: >-
+          hostPath volumes are forbidden: a docker.sock or node-directory mount
+          turns any container compromise into node compromise on a shared cluster.
+        pattern:
+          spec:
+            =(volumes):
+              - X(hostPath): "null"

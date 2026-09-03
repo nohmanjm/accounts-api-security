@@ -1,0 +1,64 @@
+# Fixed workload for section 4a; defect ranking and policy mapping in docs/04-remediation.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-api
+  namespace: accounts
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: accounts-api
+  template:
+    metadata:
+      labels:
+        app: accounts-api
+    spec:
+      serviceAccountName: accounts-api
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: api
+          image: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/accounts-api@sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+          ports:
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: db-creds
+              mountPath: /var/secrets/db
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "1", memory: 512Mi }
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+      volumes:
+        - name: db-creds
+          secret:
+            secretName: accounts-api-db
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: accounts-api
+  namespace: accounts
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/accounts-api-pod
+automountServiceAccountToken: false
+# The wildcard Role and its binding are deleted, not narrowed — the service needs zero K8s API access once ESO delivers its credential
