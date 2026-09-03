@@ -1,0 +1,26 @@
+# Single source of truth for all gate waivers; contract in docs/03-gates-and-waivers.md
+waivers:
+  - id: CVE-2026-99999
+    tool: trivy
+    scope: "pkg:golang/example.com/legacy-lib@v1.2.3"
+    reason: >
+      Vulnerable function not reachable from accounts-api call paths (verified
+      via govulncheck); upstream fix expected in v1.2.4.
+    ticket: SEC-142
+    approved_by: "@mal-bank/platform-team via PR review (CODEOWNERS-enforced)"
+    created: 2026-09-01
+    expires: 2026-10-30
+
+  - id: kubernetes-secret-yaml
+    tool: gitleaks
+    scope: "secrets/external-secrets.yaml"
+    pattern: "prod/accounts-api/db-app-user"
+    reason: >
+      False positive from the first CI run: the rule shape-matches the
+      ExternalSecret manifest, which holds only this Secrets Manager path, not
+      secret material. Waived by the exact path regex (commit-independent) — a
+      real secret in the same file would still be caught.
+    ticket: SEC-151
+    approved_by: "@mal-bank/platform-team via PR review (CODEOWNERS-enforced)"
+    created: 2026-09-03
+    expires: 2026-11-30

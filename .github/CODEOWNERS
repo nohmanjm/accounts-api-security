@@ -1,0 +1,6 @@
+# Branch protection requires code-owner review on these paths; a waiver or policy change cannot merge without platform review
+/waivers/                 @mal-bank/platform-team
+/policy/                  @mal-bank/platform-team
+/iam/                     @mal-bank/platform-team
+/.github/workflows/       @mal-bank/platform-team
+/scripts/waivers.py       @mal-bank/platform-team
