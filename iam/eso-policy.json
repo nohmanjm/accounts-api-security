@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadTeamTaggedSecretsOnly",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:ap-south-1:123456789012:secret:prod/accounts-api/*",
+      "Condition": {
+        "StringEquals": {
+          "secretsmanager:ResourceTag/team": "accounts"
+        }
+      }
+    },
+    {
+      "Sid": "DecryptOnlyViaSecretsManager",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "arn:aws:kms:ap-south-1:123456789012:key/11111111-2222-3333-4444-555555555555",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "secretsmanager.ap-south-1.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
