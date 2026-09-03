@@ -123,3 +123,13 @@ committed Audit/Enforce split and let PolicyReports start accumulating — every
 control here gets *stronger* with that evidence stream, and it's the one that protects
 eleven other teams, not just this service. Second: the workflow-diff alert, because
 blast-radius (b) showed it's cheap and currently dark.
+
+**Recorded as a known fail, not hidden:** the release pipeline's `verify` job depends on
+live Sigstore public infrastructure and stalled in CI; I bounded it to fail-fast rather
+than hang, but did not make it reliably green. The right fix — offline cosign-bundle
+verification against a pinned, mirrored trust root — is written up in
+`docs/02-build-integrity.md` and is genuinely the bank-grade approach (a release gate
+must not hinge on a third party's uptime). I chose to document this honestly and spend
+the remaining budget on the security design rather than on chasing external-infra
+flakiness, since the signing chain itself (`build-sign-attest`) is green and the gap is
+operational, not a break in provenance.
