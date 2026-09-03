@@ -1,0 +1,83 @@
+# Egress design rationale and limitations in docs/05-admission-runtime.md
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: accounts-api-default-deny
+  namespace: accounts
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress
+      ports:
+        - port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: accounts-api-egress
+  namespace: accounts
+spec:
+  podSelector:
+    matchLabels:
+      app: accounts-api
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { port: 53, protocol: UDP }
+        - { port: 53, protocol: TCP }
+    - to:
+        - ipBlock: { cidr: 10.0.20.0/24 } # assumption: DB subnets
+        - ipBlock: { cidr: 10.0.21.0/24 }
+      ports:
+        - { port: 5432, protocol: TCP }
+    - to:
+        - ipBlock: { cidr: 10.0.30.0/28 } # assumption: Kinesis VPC endpoint ENIs
+      ports:
+        - { port: 443, protocol: TCP }
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: egress
+          podSelector:
+            matchLabels:
+              app: egress-proxy
+      ports:
+        - { port: 3128, protocol: TCP }
+---
+# Pre-installed quarantine referenced by runtime/runbook.md step 1; selects nothing until a responder labels a pod
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: quarantine
+  namespace: accounts
+spec:
+  podSelector:
+    matchLabels:
+      quarantine: "true"
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: egress-proxy-config
+  namespace: egress
+data:
+  squid.conf: |
+    http_port 3128
+    acl kyc_provider dstdomain kyc.example-provider.com
+    acl connect_443 port 443
+    acl CONNECT method CONNECT
+    http_access allow CONNECT connect_443 kyc_provider
+    http_access deny all
+    access_log stdio:/dev/stdout

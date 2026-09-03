@@ -1,0 +1,39 @@
+# Custom rules for this workload; payload, routing, and runbook in runtime/runbook.md
+- macro: accounts_api_container
+  condition: (container.image.repository endswith "accounts-api")
+
+- list: accounts_api_expected_procs
+  items: [accounts-api]
+
+- rule: Unexpected process in accounts-api container
+  desc: >
+    The container runs exactly one static binary from a read-only rootfs — no
+    shell, no package manager. Any spawned process indicates post-exploitation
+    activity (T2).
+  condition: >
+    spawned_process
+    and accounts_api_container
+    and not proc.name in (accounts_api_expected_procs)
+  output: >
+    Unexpected process in accounts-api container
+    (proc=%proc.name cmdline=%proc.cmdline parent=%proc.pname user=%user.name
+    pod=%k8s.pod.name ns=%k8s.ns.name node=%k8s.node.name
+    image=%container.image.repository)
+  priority: CRITICAL
+  tags: [accounts-api, T2, post-exploitation]
+
+- rule: DB credential file read by unexpected process
+  desc: >
+    The mounted DB credential at /var/secrets/db is read only by the api binary
+    at connection setup. Any other reader is credential theft in progress (T3).
+  condition: >
+    open_read
+    and accounts_api_container
+    and fd.name startswith /var/secrets/db
+    and not proc.name in (accounts_api_expected_procs)
+  output: >
+    DB credential read by unexpected process in accounts-api
+    (proc=%proc.name cmdline=%proc.cmdline file=%fd.name
+    pod=%k8s.pod.name ns=%k8s.ns.name node=%k8s.node.name)
+  priority: CRITICAL
+  tags: [accounts-api, T3, credential-access]
